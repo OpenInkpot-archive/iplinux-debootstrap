@@ -1,11 +1,12 @@
-debootstrap (1.0.10.oi1) UNRELEASED; urgency=low
+debootstrap (1.0.10.oi1) asimov; urgency=low
 
   * Build for OpenInkpot:
     - Disabled debootstrap-udeb,
     - Changed section,
     - Changed maintainer and uploaders.
+  * Added 'asimov' script, moved from slind-core.
 
- -- Mikhail Gusarov <dottedmag@dottedmag.net>  Mon, 27 Oct 2008 02:43:59 +0600
+ -- Mikhail Gusarov <dottedmag@dottedmag.net>  Mon, 27 Oct 2008 02:47:56 +0600
 
 debootstrap (1.0.10) unstable; urgency=low
 

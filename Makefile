@@ -17,6 +17,7 @@ install:
 
 	install -o root -g root -m 0644 scripts/debian/* $(DSDIR)/scripts/
 	install -o root -g root -m 0644 scripts/ubuntu/* $(DSDIR)/scripts/
+	install -o root -g root -m 0644 scripts/openinkpot/* $(DSDIR)/scripts/
 	install -o root -g root -m 0644 functions $(DSDIR)/
 
         # no special script for etch anymore
