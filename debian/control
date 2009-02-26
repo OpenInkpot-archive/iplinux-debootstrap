@@ -1,5 +1,5 @@
 Source: debootstrap
-Section: host-tools
+Section: host/tools
 Priority: optional
 Maintainer: Mikhail Gusarov <dottedmag@dottedmag.net>
 Build-Depends: debhelper (>= 4.2), makedev (>= 2.3.1-69)
