@@ -1,3 +1,10 @@
+debootstrap (1.0.10.zz.ip1) asimov; urgency=low
+
+  * Build for IPlinux.
+  * Added apt-keys to the list of packages for 'asimov'.
+
+ -- Mikhail Gusarov <dottedmag@dottedmag.net>  Tue, 10 Mar 2009 17:48:44 +0600
+
 debootstrap (1.0.10.oi1) asimov; urgency=low
 
   * Build for OpenInkpot:
