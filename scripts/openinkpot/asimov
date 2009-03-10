@@ -24,7 +24,7 @@ work_out_debs () {
     fi
     #if [ "$ARCH" = "alpha" -o "$ARCH" = "ia64" ]; then LIBC6="libc6.1"; fi
 
-    base="libstdc++6 apt"
+    base="libstdc++6 apt apt-keys"
 }
 
 first_stage_install () {
