@@ -2,12 +2,13 @@ Source: debootstrap
 Section: host/tools
 Priority: optional
 Maintainer: Mikhail Gusarov <dottedmag@dottedmag.net>
-Build-Depends: debhelper (>= 4.2), makedev (>= 2.3.1-69)
+Build-Depends: debhelper (>= 7.0.0), makedev (>= 2.3.1-69)
 Standards-Version: 3.8.0
 
 Package: debootstrap
 Architecture: all
 Depends: wget, binutils
+Recommends: gnupg
 Description: Bootstrap a basic Debian system
  debootstrap is used to create a Debian base system from scratch,
  without requiring the availability of dpkg or apt. It does this by

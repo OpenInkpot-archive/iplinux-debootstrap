@@ -15,10 +15,12 @@ if doing_variant fakechroot; then
     test "$FAKECHROOT" = "true" || error 1 FAKECHROOTREQ "This variant requires fakechroot environment to be started"
 fi
 
-work_out_debs () {
-    LIBC6=libc6
-    if [ "$ARCH" = "alpha" ] || [ "$ARCH" = "ia64" ]; then LIBC6="libc6.1"; fi
+case $ARCH in
+  alpha|ia64) LIBC="libc6.1" ;;
+  *)          LIBC="libc6" ;;
+esac
 
+work_out_debs () {
     required="$(get_debs Priority: required)"
 
     if doing_variant -; then 
@@ -114,7 +116,7 @@ second_stage_install () {
     fi
 
     p; progress $baseprog $bases INSTCORE "Installing core packages" #4
-    x_core_install $LIBC6
+    x_core_install $LIBC
 
     p; progress $baseprog $bases INSTCORE "Installing core packages" #5
     x_core_install perl-base
@@ -134,7 +136,7 @@ second_stage_install () {
     info UNPACKREQ "Unpacking required packages..."
 
     smallyes '' | 
-      (repeat 5 in_target_failmsg UNPACK_REQ_FAIL_FIVE "Failure while unpacking required packages.  This will be attempted up to five times." "" \
+      (repeatn 5 in_target_failmsg UNPACK_REQ_FAIL_FIVE "Failure while unpacking required packages.  This will be attempted up to five times." "" \
       dpkg --status-fd 8 --force-depends --unpack $(debfor $required) 8>&1 1>&7 |
       dpkg_progress $baseprog $bases UNPACKREQ "Unpacking required packages" UNPACKING) 7>&1
 
@@ -164,15 +166,28 @@ echo \"Warning: Fake start-stop-daemon called, doing nothing\"" > "$TARGET/sbin/
 
     info UNPACKBASE "Unpacking the base system..."
 
+    setup_available $required $base
+    done_predeps=
+    while predep=$(get_next_predep); do
+      # We have to resolve dependencies of pre-dependencies manually because
+      # dpkg --predep-package doesn't handle this.
+      predep=$(without "$(without "$(resolve_deps $predep)" "$required")" "$done_predeps")
+      # XXX: progress is tricky due to how dpkg_progress works
+      # -- cjwatson 2009-07-29
+      p; smallyes '' | in_target dpkg --force-overwrite --force-confold --skip-same-version --install $(debfor $predep)
+      base=$(without "$base" "$predep")
+      done_predeps="$done_predeps $predep"
+    done
+
     smallyes '' | 
-      (repeat 5 in_target_failmsg INST_BASE_FAIL_FIVE "Failure while installing base packages.  This will be re-attempted up to five times." "" \
+      (repeatn 5 in_target_failmsg INST_BASE_FAIL_FIVE "Failure while installing base packages.  This will be re-attempted up to five times." "" \
       dpkg --status-fd 8 --force-overwrite --force-confold --skip-same-version --unpack $(debfor $base) 8>&1 1>&7 |
       dpkg_progress $baseprog $bases UNPACKBASE "Unpacking base system" UNPACKING) 7>&1
 
     info CONFBASE "Configuring the base system..."
 
     smallyes '' |
-      (repeat 5 in_target_failmsg CONF_BASE_FAIL_FIVE "Failure while configuring base packages.  This will be attempted 5 times." "" \
+      (repeatn 5 in_target_failmsg CONF_BASE_FAIL_FIVE "Failure while configuring base packages.  This will be attempted 5 times." "" \
       dpkg --status-fd 8 --force-confold --skip-same-version --configure -a 8>&1 1>&7 |
       dpkg_progress $baseprog $bases CONFBASE "Configuring base system" CONFIGURING) 7>&1
 

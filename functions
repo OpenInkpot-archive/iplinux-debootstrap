@@ -17,8 +17,6 @@ error () {
 		(echo "E: $name"
 		for x in "$@"; do echo "EA: $x"; done
 		echo "EF: $fmt") >&4
-	elif [ "$USE_GETTEXT_INTERACTION" ]; then
-		(printf "E: `LANG=$GETTEXT_LANG gettext debootstrap "$fmt"`\n" "$@") >&4
 	else
 		(printf "E: $fmt\n" "$@") >&4
 	fi
@@ -34,8 +32,6 @@ warning () {
 		(echo "W: $name"
 		for x in "$@"; do echo "WA: $x"; done
 		echo "WF: $fmt") >&4
-	elif [ "$USE_GETTEXT_INTERACTION" ]; then
-		printf "W: `LANG=$GETTEXT_LANG gettext debootstrap "$fmt"`\n" "$@" >&4
 	else
 		printf "W: $fmt\n" "$@" >&4
 	fi
@@ -50,8 +46,6 @@ info () {
 		(echo "I: $name"
 		for x in "$@"; do echo "IA: $x"; done
 		echo "IF: $fmt") >&4
-	elif [ "$USE_GETTEXT_INTERACTION" ]; then
-		printf "I: `LANG=$GETTEXT_LANG gettext debootstrap "$fmt"`\n" "$@" >&4
 	else
 		printf "I: $fmt\n" "$@" >&4
 	fi
@@ -257,7 +251,7 @@ get () {
 	fi
 
 	if [ -e "$2" ]; then
-		if [ "$3" = "" ]; then
+		if [ -z "$3" ]; then
 			return 0
 		elif [ "$3" = nocache ]; then
 			rm -f "$2"
@@ -312,7 +306,7 @@ get () {
 				md5=""
 			fi
 		fi
-		if [ "$md5" = "" ]; then
+		if [ -z "$md5" ]; then
 			[ "$dest2" = "$dest" ] || mv "$dest2" "$dest"
 			case "$typ" in
 			    gz)  gunzip "$dest" ;;
@@ -399,7 +393,7 @@ apt_dest () {
 	#   rel suite mirror path
 	case "$1" in
 	    deb)
-		echo "var/cache/apt/archives/${2}_${3}_${4}.deb" | sed 's/:/%3a/'
+		echo "/var/cache/apt/archives/${2}_${3}_${4}.deb" | sed 's/:/%3a/'
 		;;
 	    pkg)
 		local m="$5"
@@ -484,7 +478,7 @@ download_release_indices () {
 	done
 	COMPONENTS="$(echo $COMPONENTS)"
 
-	if [ "$COMPONENTS" = "" ]; then
+	if [ -z "$COMPONENTS" ]; then
 		mv "$reldest" "$reldest.malformed"
 		error 1 INVALIDREL "Invalid Release file, no valid components"
 	fi
@@ -643,9 +637,9 @@ download_release () {
 		local pkgdest="$TARGET/$($DLDEST pkg "$SUITE" "$c" "$ARCH" "$m" "$path")"
 		if [ ! -e "$pkgdest" ]; then continue; fi
 		pkgs_to_get="$(download_debs "$m" "$pkgdest" $pkgs_to_get 5>&1 1>&6)"
-		if [ "$pkgs_to_get" = "" ]; then break; fi
+		if [ -z "$pkgs_to_get" ]; then break; fi
 	    done 6>&1
-	    if [ "$pkgs_to_get" = "" ]; then break; fi
+	    if [ -z "$pkgs_to_get" ]; then break; fi
 	done
 	progress $dloaddebs $totaldebs DOWNDEBS "Downloading packages"
 	if [ "$pkgs_to_get" != "" ]; then
@@ -736,7 +730,7 @@ extract () { (
 ); }
 
 in_target_nofail () {
-	if ! chroot "$TARGET" "$@" 2>/dev/null; then
+	if ! $CHROOT_CMD "$@" 2>/dev/null; then
 		true
 	fi
 	return 0
@@ -747,7 +741,7 @@ in_target_failmsg () {
 	local msg="$2"
 	local arg="$3"
 	shift; shift; shift
-	if ! chroot "$TARGET" "$@"; then
+	if ! $CHROOT_CMD "$@"; then
 		warning "$code" "$msg" "$arg"
 		return 1
 	fi
@@ -755,7 +749,7 @@ in_target_failmsg () {
 }
 
 in_target () {
-	in_target_failmsg IN_TARGET_FAIL "Failure trying to run: %s" "chroot $TARGET $*" "$@"
+	in_target_failmsg IN_TARGET_FAIL "Failure trying to run: %s" "$CHROOT_CMD $*" "$@"
 }
 
 ###################################################### standard setup stuff
@@ -821,6 +815,12 @@ umount_on_exit () {
 	fi
 }
 
+clear_mtab () {
+	if [ -f "$TARGET/etc/mtab" ] && [ ! -h "$TARGET/etc/mtab" ]; then
+		rm -f "$TARGET/etc/mtab"
+	fi
+}
+
 setup_proc () {
 	case "$ARCH" in
 	    kfreebsd-*)
@@ -844,6 +844,7 @@ setup_proc () {
 			umount "$TARGET/sys" 2>/dev/null || true
 			in_target mount -t sysfs sysfs /sys
 		fi
+		on_exit clear_mtab
 		;;
 	esac
 	umount_on_exit /lib/init/rw
@@ -862,7 +863,7 @@ setup_devices () {
 		setup_devices_hurd ;;
 	    *)
 		if [ -e "$DEVICES_TARGZ" ]; then
-			(cd "$TARGET"; zcat "$DEVICES_TARGZ" | tar -xf -)
+			zcat "$DEVICES_TARGZ" | (cd "$TARGET"; tar -xf -)
 		else
 			if [ -e /dev/.devfsd ] ; then
 				in_target mount -t devfs devfs /dev
@@ -996,6 +997,24 @@ while (<STDIN>) {
 			local p="$4"
 			shift; shift; shift; shift
 			pkgdetails_field 0 "$f" "$m" "$@" < "$p"
+		elif [ "$1" = "STANZAS" ]; then
+			local pkgdest="$2"; shift; shift
+			perl -e '
+my $accum = "";
+while (<STDIN>) {
+	$accum .= $_;
+	$in = 1 if (/^Package: (.*)$/ && grep {$_ eq $1} @ARGV);
+	if ($in and /^$/) {
+		print $accum;
+		if (substr($accum, -1) != "\n") {
+			print "\n\n";
+		} elsif (substr($accum, -2, 1) != "\n") {
+			print "\n";
+		}
+		$in = 0;
+	}
+	$accum = "" if /^$/;
+}' <"$pkgdest" "$@"
 		fi
 	}
 elif [ -e "/usr/lib/debootstrap/pkgdetails" ]; then
@@ -1029,6 +1048,28 @@ resolve_deps () {
 		ALLPKGS="$ALLPKGS2"
 	done
 	echo $ALLPKGS
+}
+
+setup_available () {
+	local m1="${MIRRORS%% *}"
+
+	for c in $COMPONENTS; do
+		local path="dists/$SUITE/$c/binary-$ARCH/Packages"
+		local pkgdest="$TARGET/$($DLDEST pkg "$SUITE" "$c" "$ARCH" "$m1" "$path")"
+		# XXX: What if a package is in more than one component?
+		# -- cjwatson 2009-07-29
+		"$PKGDETAILS" STANZAS "$pkgdest" "$@"
+	done >"$TARGET/var/lib/dpkg/available"
+
+	for pkg; do
+		echo "$pkg install" | sudo dpkg --admindir "$TARGET/var/lib/dpkg" --set-selections
+	done
+}
+
+get_next_predep () {
+	local stanza="$(dpkg --admindir "$TARGET/var/lib/dpkg" --predep-package)" || return 1
+	[ "$stanza" ] || return 1
+	echo "$stanza" | grep '^Package:' | sed 's/^Package://; s/^ *//'
 }
 
 ################################################################### helpers
@@ -1096,7 +1137,8 @@ without () {
 	echo
 }
 
-repeat () {
+# Formerly called 'repeat', but that's a reserved word in zsh.
+repeatn () {
 	local n="$1"
 	shift
 	while [ "$n" -gt 0 ]; do

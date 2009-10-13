@@ -1,3 +1,105 @@
+debootstrap (1.0.15+1.0.16.ip1) asimov; urgency=low
+
+  [ Colin Watson ]
+  * Cope with pre-dependencies of included packages that aren't in Priority:
+    required (closes: #487908).
+  * Upgrade to debhelper v7. (Override rules get pretty hairy for this
+    package, so I haven't switched to dh(1).)
+
+  [ Frans Pop ]
+  * Makefile: remove unused ARCH variable.
+
+  [ Mikhail Gusarov ]
+  * Merge IPlinux changes.
+  * Remove miniperl from IPlinux basesystem, dpkg is now Perl-free.
+
+ -- Mikhail Gusarov <dottedmag@dottedmag.net>  Wed, 14 Oct 2009 06:24:50 +0700
+
+debootstrap (1.0.15) unstable; urgency=low
+
+  * On Linux, clear out /etc/mtab on exit if it's not a symlink. Should fix
+    problems Wouter Verhelst and Martin Michlmayr are seeing with
+    initramfs-tools MODULES=dep, although it probably isn't a perfect
+    solution.
+
+ -- Colin Watson <cjwatson@debian.org>  Thu, 23 Jul 2009 16:45:00 +0100
+
+debootstrap (1.0.14) unstable; urgency=low
+
+  * Apply patch from Felix Zielcke <fzielcke@z-51.de> to use "dpkg
+    --print-architecture" to avoid deprecation warning. Closes: #531680.
+  * Reference squeeze instead of sarge in manpage. Based on a patch from
+    Geoff Simmons <gsimmons@gsimmons.org>. Closes: #534575.
+  * Apply patch from Riku Voipio <riku.voipio@iki.fi> to add support for
+    scratchbox variant. Closes: #536820.
+
+ -- Otavio Salvador <otavio@ossystems.com.br>  Wed, 22 Jul 2009 12:34:54 -0300
+
+debootstrap (1.0.13) unstable; urgency=low
+
+  [ Otavio Salvador ]
+  * Apply patch from Luca Favatella <slackydeb@gmail.com> to improve
+    coding style.
+
+  [ Colin Watson ]
+  * Add (Ubuntu) karmic as a symlink to gutsy.
+
+ -- Colin Watson <cjwatson@debian.org>  Fri, 24 Apr 2009 20:08:24 +0100
+
+debootstrap (1.0.12) unstable; urgency=low
+
+  [ Otavio Salvador ]
+  * Improve code to choose between libc packages. Thanks to Luca Favatella
+    <slackydeb@gmail.com> for first version of the patch.
+
+  [ Colin Watson ]
+  * Remove partial support for emitting translated progress messages with
+    gettext. Don't panic; d-i still has all the support necessary for this.
+    debootstrap's own support for doing this outside d-i with gettext's
+    shell bindings has been completely broken ever since it was added in
+    2003, though, and nobody has complained. Fixing it would require a big
+    pile of infrastructure and some non-trivial patches, plus arranging to
+    copy all the translations over from base-installer, and it just doesn't
+    seem worth it, so lose the cruft (LP: #188690).
+  * Export PATH, just to make sure. It isn't necessarily exported by shells
+    running from init=/bin/sh or similar, and the upstream bash maintainer
+    is unwilling to export it by default; it's easy enough to do so here
+    (LP: #320188).
+
+ -- Colin Watson <cjwatson@debian.org>  Tue, 17 Mar 2009 16:38:46 +0000
+
+debootstrap (1.0.11) unstable; urgency=low
+
+  * Add (Ubuntu) jaunty as a symlink to gutsy.
+  * Clarify that --second-stage is needed to complete the bootstrapping
+    process after --foreign.
+  * Fix --make-tarball= option (closes: #484869).
+  * Fix old Debian scripts and all Ubuntu scripts to cope with Anthony's
+    change in 1.0.8 to make --second-stage not bother recalculating required
+    and base.
+  * Rename 'repeat' to 'repeatn', since 'repeat' is a reserved word in zsh;
+    although strictly speaking this seems like an incompatibility in zsh
+    when linked to /bin/sh (closes: #340058).
+  * Fix --unpack-tarball= option (thanks, Torsten Landschoff; closes:
+    #500759).
+  * Fix handling of relative DEBOOTSTRAP_DIR (thanks, Mikhail Gusarov;
+    closes: #503460).
+  * Cope with ancient versions of chroot(8) that don't call chdir() (thanks,
+    Patrik Arvhult; closes: #350635).
+  * Recommend gnupg for --keyring option (thanks, Robert Millan; closes:
+    #467571).
+  * Note that you can't --include packages with non-required Pre-Depends
+    (see #487908).
+  * Mention /sys in EXAMPLE section of manual page, and use "defaults"
+    rather than "none" as the mount options for /proc (thanks, Raúl Sánchez
+    Siles; closes: #410787).
+  * Add /dev/console to devices.tar.gz (after all, MAKEDEV's 'consoleonly'
+    was added for boot-floppies in the first place; see
+    https://lists.ubuntu.com/archives/ubuntu-devel/2009-January/027230.html).
+  * Add support for squeeze (closes: #513488).
+
+ -- Colin Watson <cjwatson@debian.org>  Wed, 18 Feb 2009 23:46:12 +0000
+
 debootstrap (1.0.10.zz.ip1) asimov; urgency=low
 
   * Build for IPlinux.
