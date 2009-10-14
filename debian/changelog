@@ -10,7 +10,7 @@ debootstrap (1.0.15+1.0.16.ip1) asimov; urgency=low
   * Makefile: remove unused ARCH variable.
 
   [ Mikhail Gusarov ]
-  * Merge IPlinux changes.
+  * Rebase IPlinux changes.
   * Remove miniperl from IPlinux basesystem, dpkg is now Perl-free.
 
  -- Mikhail Gusarov <dottedmag@dottedmag.net>  Wed, 14 Oct 2009 06:24:50 +0700
