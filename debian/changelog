@@ -1,3 +1,10 @@
+debootstrap (1.0.15+1.0.16.ip2) asimov; urgency=low
+
+  * Replace manual juggling with ldconfig.REAL and start-stop-daemon.REAL
+    with helper package.
+
+ -- Mikhail Gusarov <dottedmag@dottedmag.net>  Tue, 20 Oct 2009 17:25:27 +0700
+
 debootstrap (1.0.15+1.0.16.ip1) asimov; urgency=low
 
   [ Colin Watson ]
