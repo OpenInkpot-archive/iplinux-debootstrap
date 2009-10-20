@@ -16,15 +16,13 @@ work_out_debs () {
 
     if [ "$ARCH" = "${ARCH#uclibc}" ]; then
         LIBC6=libc6
-        #required="bash-minimal gcc-4.0-base $required $LIBC6"
         required="$required $LIBC6"
     else
         LIBC6=libuclibc0
         required="$required $LIBC6"
     fi
-    #if [ "$ARCH" = "alpha" -o "$ARCH" = "ia64" ]; then LIBC6="libc6.1"; fi
 
-    base="libstdc++6 apt apt-keys"
+    base="libstdc++6 apt apt-keys fakechroot-cross-target-helper"
 }
 
 first_stage_install () {
@@ -74,25 +72,6 @@ second_stage_install () {
     }
 
     setup_proc_fakechroot
-    if [ ! -f "$TARGET/sbin/ldconfig" ]; then
-        echo "WARNING: there should be /sbin/ldconfig in newer versions of libuclibc0"
-        echo "         Please update your repository"
-        cat <<EOF >> "$TARGET/sbin/ldconfig"
-#!/bin/sh
-echo "Fake ldconfig for an uclibc system"
-exit 0
-EOF
-        chmod 755 "$TARGET/sbin/ldconfig"
-    fi
-    
-    if [ ! -f "$TARGET/sbin/start-stop-daemon" ]; then
-        cat <<EOF >> "$TARGET/sbin/start-stop-daemon"
-#!/bin/sh
-echo "Fake start-stop-daemon for system bootstrap"
-exit 0
-EOF
-        chmod 755 "$TARGET/sbin/start-stop-daemon"
-    fi
 
     DEBIAN_FRONTEND=noninteractive
     export DEBIAN_FRONTEND
@@ -103,21 +82,8 @@ EOF
     p; progress $baseprog $bases INSTBASE "Installing base system" #1
     info INSTCORE "Installing core packages..."
 
-  if [ ! -f "$TARGET/sbin/ldconfig.REAL" ]
-  then
-  [ -f "$TARGET/sbin/ldconfig" ] && mv "$TARGET/sbin/ldconfig" "$TARGET/sbin/ldconfig.REAL"
-  echo \
-"#!/bin/sh
-[ "x\$FAKECHROOT_BASE" != "x" ] || exec /sbin/ldconfig.REAL "$*"
-echo
-echo \"Warning: Fake ldconfig called, doing nothing\"" > "$TARGET/sbin/ldconfig"
-  chmod 755 "$TARGET/sbin/ldconfig"
-
-  echo \
-"/sbin/ldconfig
-/sbin/ldconfig.REAL
-fakechroot" >> "$TARGET/var/lib/dpkg/diversions"
-    fi
+    :> "$TARGET/var/lib/dpkg/diversions"
+    x_core_install fakechroot-cross-target-helper
 
     p; progress $baseprog $bases INSTBASE "Installing base system" #2
     x_core_install libgcc1 $LIBC6
@@ -144,13 +110,6 @@ fakechroot" >> "$TARGET/var/lib/dpkg/diversions"
 
     info CONFREQ "Configuring required packages..."
 
-    mv "$TARGET/sbin/start-stop-daemon" "$TARGET/sbin/start-stop-daemon.REAL"
-    echo \
-    "#!/bin/sh
-    echo
-    echo \"Warning: Fake start-stop-daemon called, doing nothing\"" > "$TARGET/sbin/start-stop-daemon"
-    chmod 755 "$TARGET/sbin/start-stop-daemon"
-
     setup_dselect_method apt
 
     p; progress $baseprog $bases INSTBASE "Installing base system" #19
@@ -165,8 +124,6 @@ fakechroot" >> "$TARGET/var/lib/dpkg/diversions"
     smallyes '' | repeatn 5 in_target_failmsg CONF_BASE_FAIL_FIVE "Failure while configuring base packages.  This will be attempted 5 times." "" dpkg  --force-confold --skip-same-version  --configure -a
 
     p 9; progress $baseprog $bases INSTBASE "Installing base system" #39
-
-    mv "$TARGET/sbin/start-stop-daemon.REAL" "$TARGET/sbin/start-stop-daemon"
 
     progress $bases $bases INSTBASE "Installing base system" #40
     info BASESUCCESS "Base system installed successfully."
