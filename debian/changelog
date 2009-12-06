@@ -1,3 +1,9 @@
+debootstrap (1.0.15+1.0.16.ip3) zelazny; urgency=low
+
+  * Added 'zelazny' debootstrap script (same as for 'asimov')
+
+ -- Mikhail Gusarov <dottedmag@dottedmag.net>  Sun, 06 Dec 2009 21:46:03 +0600
+
 debootstrap (1.0.15+1.0.16.ip2) asimov; urgency=low
 
   * Replace manual juggling with ldconfig.REAL and start-stop-daemon.REAL
