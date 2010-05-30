@@ -1,3 +1,9 @@
+debootstrap (1.0.15+1.0.16.ip4) zelazny; urgency=low
+
+  * Added 'bradbury' debootstrap script (same as for 'zelazny').
+
+ -- Mikhail Gusarov <dottedmag@dottedmag.net>  Mon, 31 May 2010 04:02:28 +0700
+
 debootstrap (1.0.15+1.0.16.ip3) zelazny; urgency=low
 
   * Added 'zelazny' debootstrap script (same as for 'asimov')
