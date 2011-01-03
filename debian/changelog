@@ -1,3 +1,11 @@
+debootstrap (1.0.15+1.0.16.ip5) zelazny; urgency=low
+
+  * Unmerge asimov/bradbury/zelazny scripts.
+  * Remove start-stop-daemon package from set of required packages in
+    zelazny.
+
+ -- Mikhail Gusarov <dottedmag@dottedmag.net>  Mon, 03 Jan 2011 10:42:18 +0100
+
 debootstrap (1.0.15+1.0.16.ip4) zelazny; urgency=low
 
   * Added 'bradbury' debootstrap script (same as for 'zelazny').
